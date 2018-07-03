@@ -1,21 +1,695 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Vue_test</title>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <style media="screen">
+    *,
+    *:after,
+    *:before {
+      box-sizing: border-box;
+    }
+
+    body {
+      padding: 2rem;
+    }
+
+    form {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      margin-left: -1rem;
+      margin-right: -1rem;
+    }
+
+    fieldset {
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    fieldset label~label {
+      margin-left: 0.25em;
+    }
+
+    legend,
+    label {
+      font-weight: bold;
+      display: block;
+      width: 100%;
+      padding-bottom: 0.5em;
+      margin-bottom: 0.5em;
+      border-bottom: 1px solid #666;
+    }
+
+    input[type="radio"] {
+      border: 0;
+      clip: rect(0 0 0 0);
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      padding: 0;
+      position: absolute;
+      width: 1px;
+    }
+
+    input[type="radio"]:checked+label:before {
+      border-color: black;
+      background-image: radial-gradient(black 50%, transparent 50%);
+    }
+
+    input[type="radio"]:hover,
+    input[type="radio"]:focus {
+      cursor: pointer;
+    }
+
+    input[type="radio"]:hover+label,
+    input[type="radio"]:focus+label {
+      cursor: pointer;
+    }
+
+    input[type="radio"]:hover+label:before,
+    input[type="radio"]:focus+label:before {
+      background-image: radial-gradient(#ccc 50%, transparent 50%);
+    }
+
+    input[type="radio"]+label {
+      font-weight: normal;
+      display: inline-block;
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+      width: auto;
+    }
+
+    input[type="radio"]+label:before {
+      content: '';
+      display: inline-block;
+      height: .5em;
+      width: .5em;
+      border: 1px solid gray;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 0.25em;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+
+    th {
+      padding: 0.5em;
+      color: black;
+      background-color: #111;
+      text-align: left;
+    }
+
+    td {
+      padding: 0.5em;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    .form__field {
+      display: block;
+      margin-bottom: 1rem;
+      width: 100%;
+      text-align: left;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    @media screen and (min-width: 768px) {
+      .form__field {
+        width: 50%;
+      }
+    }
+
+    /* Make things perty */
+
+    html {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+      color: black;
+      height: 100%;
+      padding-top: 2em;
+      text-align: center;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      text-transform: uppercase;
+      text-shadow: 0 0 0.5em black;
+    }
+
+    h2 {
+      font-weight: 300;
+    }
+
+    button {
+      border: none;
+      border-radius: 0.25em;
+      background: black;
+      padding: 0.25em 0.5em;
+      transition: background 250ms ease-in-out;
+    }
+
+    button:hover {
+      background: #cc8400;
+    }
+
+    .pen-intro {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    a {
+      color: black;
+      text-decoration: none;
+      transition: color 250ms ease-in-out;
+    }
+
+    a:hover {
+      color: yellow;
+    }
+  </style>
 </head>
+
 <body>
-  <div id="app">
-    {{ message }}
+  <div class="app" id="app">
+    <form action="#">
+      <div class="form__field">
+        <fieldset>
+          <legend v-model="gender">Filtre sur </legend>
+          <input type="radio" name="gender" value="" v-model="gender" id="gender_1">
+          <label for="gender_1">Tout</label>
+          <input type="radio" name="gender" value="Homme" v-model="gender" id="gender_2">
+          <label for="gender_2">Homme</label>
+          <input type="radio" name="gender" value="Femme" v-model="gender" id="gender_3">
+          <label for="gender_3">Femme</label>
+        </fieldset>
+      </div>
+    </form>
+
+    <table>
+
+      <tbody>
+        <template v-for="item in items_filtered_sorted">
+					<tr>
+						<td>{{ item.id }}</td>
+						<td>{{ item.first_name }}</td>
+						<td>{{ item.last_name }}</td>
+						<td>{{ item.email }}</td>
+						<td>{{ item.gender }}</td>
+						<td>{{ item.ip_address }}</td>
+					</tr>
+				</template>
+      </tbody>
+    </table>
   </div>
 
   <script>
-    var app = new Vue({
-      el: '#app',
-      data: {
-        message: 'ça marche mon gars'
-      }
-    })
+    (function() {
+      var app;
+      /**
+
+       * @return {Array}
+       */
+      var items_filtered_sorted = function() {
+        var
+          items = this.items,
+          sort_by = this.sort_by,
+          sort_order = this.sort_order,
+          gender = this.gender,
+          search = this.search;
+
+        items = items_filter(items, gender, search);
+        items = items_sort(items, sort_order, sort_by);
+
+        return items;
+      };
+      /**
+
+       * @param  {Array}  items
+       * @param  {String} sort_order
+       * @param  {String} sort_by
+       * @return {Array}           
+       */
+      var items_sort = function(items, sort_order, sort_by) {
+
+        return items;
+      };
+      /**
+
+       * @param  {Array}  items
+       * @param  {String} gender
+       * @param  {String} search
+       * @return {Array}
+       */
+      var items_filter = function(items, gender, search) {
+
+        var options = {
+          shouldSort: true,
+          threshold: 0.3,
+          minMatchCharLength: 2,
+          keys: [
+            'first_name',
+            'last_name',
+            'ip_address',
+            'email'
+          ]
+        };
+        var fuse;
+
+
+        if ('' !== gender) {
+
+          items = items.filter(function(item) {
+            return item.gender === gender;
+          });
+        }
+        if ('' !== search) {
+          fuse = new Fuse(items, options);
+
+          items = fuse.search(search);
+        }
+
+        return items;
+      };
+      /**
+
+       * @param  {Array} json
+       * @return {Null}
+       */
+      var app_start = function(json) {
+
+        var app_options = {
+          el: '#app',
+          data: {
+            items: [],
+            sort_by: 'id',
+            sort_order: 'ASC',
+            gender: '',
+            search: ''
+          },
+          computed: {
+
+            items_filtered_sorted: items_filtered_sorted
+          }
+        };
+        app = new Vue(app_options);
+      };
+
+      var items = [{
+        "id": 1,
+        "first_name": "Scott",
+        "last_name": "Wright",
+        "email": "swright0@wikimedia.org",
+        "gender": "Homme",
+        "ip_address": "44.168.192.91"
+      }, {
+        "id": 2,
+        "first_name": "Stephanie",
+        "last_name": "Grant",
+        "email": "sgrant1@springer.com",
+        "gender": "Femme",
+        "ip_address": "230.70.164.63"
+      }, {
+        "id": 3,
+        "first_name": "Joe",
+        "last_name": "Webb",
+        "email": "jwebb2@miitbeian.gov.cn",
+        "gender": "Homme",
+        "ip_address": "6.114.47.170"
+      }, {
+        "id": 4,
+        "first_name": "Laura",
+        "last_name": "Patterson",
+        "email": "lpatterson3@addthis.com",
+        "gender": "Femme",
+        "ip_address": "107.250.118.138"
+      }, {
+        "id": 5,
+        "first_name": "Diana",
+        "last_name": "Jenkins",
+        "email": "djenkins4@deviantart.com",
+        "gender": "Femme",
+        "ip_address": "38.89.105.196"
+      }, {
+        "id": 6,
+        "first_name": "Susan",
+        "last_name": "Hawkins",
+        "email": "shawkins5@gizmodo.com",
+        "gender": "Femme",
+        "ip_address": "194.86.131.138"
+      }, {
+        "id": 7,
+        "first_name": "Gary",
+        "last_name": "Mitchell",
+        "email": "gmitchell6@jigsy.com",
+        "gender": "Homme",
+        "ip_address": "96.15.78.186"
+      }, {
+        "id": 8,
+        "first_name": "Phillip",
+        "last_name": "Franklin",
+        "email": "pfranklin7@statcounter.com",
+        "gender": "Homme",
+        "ip_address": "154.57.143.176"
+      }, {
+        "id": 9,
+        "first_name": "Amy",
+        "last_name": "Johnson",
+        "email": "ajohnson8@mysql.com",
+        "gender": "Femme",
+        "ip_address": "170.233.243.190"
+      }, {
+        "id": 12,
+        "first_name": "Bruce",
+        "last_name": "Chavez",
+        "email": "bchavezb@trellian.com",
+        "gender": "Homme",
+        "ip_address": "14.164.28.201"
+      }, {
+        "id": 13,
+        "first_name": "Sarah",
+        "last_name": "Jackson",
+        "email": "sjacksonc@github.io",
+        "gender": "Femme",
+        "ip_address": "42.56.176.75"
+      }, {
+        "id": 14,
+        "first_name": "Nicholas",
+        "last_name": "Palmer",
+        "email": "npalmerd@sitemeter.com",
+        "gender": "Homme",
+        "ip_address": "191.235.51.102"
+      }, {
+        "id": 15,
+        "first_name": "Donna",
+        "last_name": "Rogers",
+        "email": "drogerse@w3.org",
+        "gender": "Femme",
+        "ip_address": "222.207.82.20"
+      }, {
+        "id": 16,
+        "first_name": "Philip",
+        "last_name": "Banks",
+        "email": "pbanksf@zimbio.com",
+        "gender": "Homme",
+        "ip_address": "251.214.201.221"
+      }, {
+        "id": 17,
+        "first_name": "Earl",
+        "last_name": "Wilson",
+        "email": "ewilsong@friendfeed.com",
+        "gender": "Homme",
+        "ip_address": "211.107.248.166"
+      }, {
+        "id": 18,
+        "first_name": "Sarah",
+        "last_name": "Brooks",
+        "email": "sbrooksh@etsy.com",
+        "gender": "Femme",
+        "ip_address": "246.9.98.7"
+      }, {
+        "id": 19,
+        "first_name": "Richard",
+        "last_name": "Schmidt",
+        "email": "rschmidti@infoseek.co.jp",
+        "gender": "Homme",
+        "ip_address": "68.226.97.123"
+      }, {
+        "id": 20,
+        "first_name": "Alan",
+        "last_name": "Morrison",
+        "email": "amorrisonj@shop-pro.jp",
+        "gender": "Homme",
+        "ip_address": "209.64.138.137"
+      }, {
+        "id": 21,
+        "first_name": "Brian",
+        "last_name": "Rivera",
+        "email": "briverak@delicious.com",
+        "gender": "Homme",
+        "ip_address": "241.34.87.170"
+      }, {
+        "id": 22,
+        "first_name": "Martha",
+        "last_name": "Coleman",
+        "email": "mcolemanl@wiley.com",
+        "gender": "Femme",
+        "ip_address": "108.147.98.201"
+      }, {
+        "id": 23,
+        "first_name": "Jerry",
+        "last_name": "Gonzales",
+        "email": "jgonzalesm@unc.edu",
+        "gender": "Homme",
+        "ip_address": "224.155.117.210"
+      }, {
+        "id": 24,
+        "first_name": "Brian",
+        "last_name": "Palmer",
+        "email": "bpalmern@goo.ne.jp",
+        "gender": "Homme",
+        "ip_address": "21.178.176.222"
+      }, {
+        "id": 25,
+        "first_name": "George",
+        "last_name": "Moreno",
+        "email": "gmorenoo@state.tx.us",
+        "gender": "Homme",
+        "ip_address": "224.207.244.50"
+      }, {
+        "id": 26,
+        "first_name": "Nancy",
+        "last_name": "Harper",
+        "email": "nharperp@blog.com",
+        "gender": "Femme",
+        "ip_address": "34.73.54.69"
+      }, {
+        "id": 27,
+        "first_name": "Todd",
+        "last_name": "West",
+        "email": "twestq@devhub.com",
+        "gender": "Homme",
+        "ip_address": "38.117.152.14"
+      }, {
+        "id": 28,
+        "first_name": "Aaron",
+        "last_name": "Larson",
+        "email": "alarsonr@sfgate.com",
+        "gender": "Homme",
+        "ip_address": "140.34.201.13"
+      }, {
+        "id": 29,
+        "first_name": "Christina",
+        "last_name": "Riley",
+        "email": "crileys@typepad.com",
+        "gender": "Femme",
+        "ip_address": "75.170.157.194"
+      }, {
+        "id": 30,
+        "first_name": "Tammy",
+        "last_name": "Parker",
+        "email": "tparkert@cmu.edu",
+        "gender": "Femme",
+        "ip_address": "214.39.85.47"
+      }, {
+        "id": 31,
+        "first_name": "Jeremy",
+        "last_name": "Perez",
+        "email": "jperezu@odnoklassniki.ru",
+        "gender": "Homme",
+        "ip_address": "46.178.167.199"
+      }, {
+        "id": 32,
+        "first_name": "Michelle",
+        "last_name": "King",
+        "email": "mkingv@ucla.edu",
+        "gender": "Femme",
+        "ip_address": "81.28.202.228"
+      }, {
+        "id": 33,
+        "first_name": "Steve",
+        "last_name": "Murray",
+        "email": "smurrayw@list-manage.com",
+        "gender": "Homme",
+        "ip_address": "111.92.74.227"
+      }, {
+        "id": 34,
+        "first_name": "Joshua",
+        "last_name": "Kennedy",
+        "email": "jkennedyx@goo.ne.jp",
+        "gender": "Homme",
+        "ip_address": "209.130.152.252"
+      }, {
+        "id": 35,
+        "first_name": "Willie",
+        "last_name": "Clark",
+        "email": "wclarky@hexun.com",
+        "gender": "Homme",
+        "ip_address": "76.221.97.53"
+      }, {
+        "id": 36,
+        "first_name": "Joan",
+        "last_name": "Romero",
+        "email": "jromeroz@jugem.jp",
+        "gender": "Femme",
+        "ip_address": "127.156.251.244"
+      }, {
+        "id": 37,
+        "first_name": "Walter",
+        "last_name": "Dixon",
+        "email": "wdixon10@nsw.gov.au",
+        "gender": "Homme",
+        "ip_address": "169.195.21.164"
+      }, {
+        "id": 38,
+        "first_name": "Barbara",
+        "last_name": "Vasquez",
+        "email": "bvasquez11@springer.com",
+        "gender": "Femme",
+        "ip_address": "36.58.107.98"
+      }, {
+        "id": 39,
+        "first_name": "Patrick",
+        "last_name": "Duncan",
+        "email": "pduncan12@opera.com",
+        "gender": "Homme",
+        "ip_address": "234.153.77.244"
+      }, {
+        "id": 40,
+        "first_name": "Andrea",
+        "last_name": "Kennedy",
+        "email": "akennedy13@umich.edu",
+        "gender": "Femme",
+        "ip_address": "183.56.38.45"
+      }, {
+        "id": 41,
+        "first_name": "Rachel",
+        "last_name": "Greene",
+        "email": "rgreene14@spotify.com",
+        "gender": "Femme",
+        "ip_address": "168.190.40.61"
+      }, {
+        "id": 42,
+        "first_name": "Nancy",
+        "last_name": "Phillips",
+        "email": "nphillips15@samsung.com",
+        "gender": "Femme",
+        "ip_address": "207.142.246.32"
+      }, {
+        "id": 43,
+        "first_name": "Kenneth",
+        "last_name": "Peters",
+        "email": "kpeters16@plala.or.jp",
+        "gender": "Homme",
+        "ip_address": "94.137.158.4"
+      }, {
+        "id": 44,
+        "first_name": "Randy",
+        "last_name": "Ferguson",
+        "email": "rferguson17@xrea.com",
+        "gender": "Homme",
+        "ip_address": "12.62.210.70"
+      }, {
+        "id": 45,
+        "first_name": "Jennifer",
+        "last_name": "Pierce",
+        "email": "jpierce18@bloglines.com",
+        "gender": "Femme",
+        "ip_address": "218.219.4.237"
+      }, {
+        "id": 46,
+        "first_name": "Jack",
+        "last_name": "Rivera",
+        "email": "jrivera19@myspace.com",
+        "gender": "Homme",
+        "ip_address": "55.174.118.99"
+      }, {
+        "id": 47,
+        "first_name": "Annie",
+        "last_name": "Simmons",
+        "email": "asimmons1a@soundcloud.com",
+        "gender": "Femme",
+        "ip_address": "236.103.34.70"
+      }, {
+        "id": 48,
+        "first_name": "Phyllis",
+        "last_name": "Wagner",
+        "email": "pwagner1b@reference.com",
+        "gender": "Femme",
+        "ip_address": "0.102.17.77"
+      }, {
+        "id": 49,
+        "first_name": "Elizabeth",
+        "last_name": "Coleman",
+        "email": "ecoleman1c@phoca.cz",
+        "gender": "Femme",
+        "ip_address": "218.112.184.171"
+      }, {
+        "id": 50,
+        "first_name": "Larry",
+        "last_name": "Ramirez",
+        "email": "lramirez1d@1688.com",
+        "gender": "Homme",
+        "ip_address": "107.14.231.105"
+      }, {
+        "id": 51,
+        "first_name": "Jesse",
+        "last_name": "Sanchez",
+        "email": "jsanchez1e@guardian.co.uk",
+        "gender": "Homme",
+        "ip_address": "164.56.182.194"
+      }, {
+        "id": 52,
+        "first_name": "Pamela",
+        "last_name": "Gibson",
+        "email": "pgibson1f@exblog.jp",
+        "gender": "Femme",
+        "ip_address": "40.140.178.77"
+      }, {
+        "id": 53,
+        "first_name": "Amy",
+        "last_name": "Reed",
+        "email": "areed1g@cdbaby.com",
+        "gender": "Femme",
+        "ip_address": "190.54.201.252"
+      }, {
+        "id": 54,
+        "first_name": "Alan",
+        "last_name": "Moore",
+        "email": "amoore1h@ycombinator.com",
+        "gender": "Homme",
+        "ip_address": "203.185.170.17"
+      }, {
+        "id": 55,
+        "first_name": "Annie",
+        "last_name": "Lewis",
+        "email": "alewis1i@nhs.uk",
+        "gender": "Femme",
+        "ip_address": "177.159.30.156"
+      }, {
+        "id": 100,
+        "first_name": "Albert",
+        "last_name": "Castillo",
+        "email": "acastillo2r@theatlantic.com",
+        "gender": "Homme",
+        "ip_address": "160.118.39.220"
+      }];
+      app_start();
+      app.items = items;
+    })();
   </script>
 </body>
+
 </html>
